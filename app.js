@@ -292,6 +292,13 @@ class PrayerWheelApp {
     this.cancelResetBtn = document.getElementById("cancelResetBtn");
     this.confirmResetBtn = document.getElementById("confirmResetBtn");
 
+    // Instructions / Guide Modal
+    this.instructionsModal = document.getElementById("instructionsModal");
+    this.helpBtn = document.getElementById("helpBtn");
+    this.closeInstructionsBtn = document.getElementById("closeInstructionsBtn");
+    this.closeInstructionsFooterBtn = document.getElementById("closeInstructionsFooterBtn");
+    this.dontShowGuideCheckbox = document.getElementById("dontShowGuideCheckbox");
+
     // Completed Modal & Round Tracking
     this.completedModal = document.getElementById("completedModal");
     this.completedResetBtn = document.getElementById("completedResetBtn");
@@ -321,6 +328,16 @@ class PrayerWheelApp {
     this.recalculateActiveFamilies();
     this.drawWheel();
     this.updateUI();
+    this.checkInitialGuide();
+  }
+
+  checkInitialGuide() {
+    const isGuideDisabled = localStorage.getItem("familia_retreat_guide_disabled") === "true";
+    if (!isGuideDisabled && this.instructionsModal) {
+      setTimeout(() => {
+        this.instructionsModal.classList.remove("hidden");
+      }, 400);
+    }
   }
 
   initSync() {
@@ -469,11 +486,12 @@ class PrayerWheelApp {
     if (savedSelected) {
       try {
         this.selectedFamily = JSON.parse(savedSelected);
-        if (this.selectedFamily) {
-          this.displaySelectedFamily(this.selectedFamily, false);
-        }
-      } catch (e) {}
+      } catch (e) {
+        this.selectedFamily = null;
+      }
     }
+    // Always start with clean result placeholder before spinning
+    this.clearResultCard();
   }
 
   saveFamiliesToStorage() {
@@ -637,11 +655,32 @@ class PrayerWheelApp {
       this.startNextRound();
     });
 
-    // Close on overlay click
-    [this.menuModal, this.historyModal, this.manageModal, this.resetModal, this.completedModal].forEach(modal => {
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.classList.add("hidden");
+    // Instructions / Guide Modal
+    if (this.helpBtn && this.instructionsModal) {
+      this.helpBtn.addEventListener("click", () => {
+        this.instructionsModal.classList.remove("hidden");
       });
+      const closeGuide = () => {
+        if (this.dontShowGuideCheckbox && this.dontShowGuideCheckbox.checked) {
+          localStorage.setItem("familia_retreat_guide_disabled", "true");
+        }
+        this.instructionsModal.classList.add("hidden");
+      };
+      if (this.closeInstructionsBtn) {
+        this.closeInstructionsBtn.addEventListener("click", closeGuide);
+      }
+      if (this.closeInstructionsFooterBtn) {
+        this.closeInstructionsFooterBtn.addEventListener("click", closeGuide);
+      }
+    }
+
+    // Close modals on backdrop click
+    [this.menuModal, this.historyModal, this.manageModal, this.resetModal, this.completedModal, this.instructionsModal].forEach(modal => {
+      if (modal) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.classList.add("hidden");
+        });
+      }
     });
 
     // Spacebar to spin
@@ -771,6 +810,7 @@ class PrayerWheelApp {
 
     this.isSpinning = true;
     this.spinBtn.disabled = true;
+    this.clearResultCard();
     this.sounds.init();
 
     const numSlices = this.activeFamilies.length;

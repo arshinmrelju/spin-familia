@@ -657,3 +657,108 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* =========================================
+   INSTRUCTIONS / GUIDE MODAL STYLING
+   ========================================= */
+.guide-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.guide-step-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.8rem 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(94, 196, 230, 0.15);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.guide-step-card:hover {
+  background: rgba(94, 196, 230, 0.08);
+  border-color: rgba(94, 196, 230, 0.35);
+}
+
+.guide-step-icon {
+  font-size: 1.5rem;
+  background: rgba(255, 104, 56, 0.15);
+  border: 1px solid rgba(255, 104, 56, 0.3);
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guide-step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.guide-step-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
+.guide-step-desc {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  line-height: 1.4;
+}
+
+.guide-tip-box {
+  background: linear-gradient(135deg, rgba(94, 196, 230, 0.12) 0%, rgba(94, 196, 230, 0.04) 100%);
+  border: 1px solid rgba(94, 196, 230, 0.3);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--sea-cyan);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Button Next Round Glowing Animation */
+.btn-remote-spin.btn-start-next-round {
+  background: linear-gradient(135deg, #00e676 0%, #00b0ff 100%) !important;
+  box-shadow: 0 4px 20px rgba(0, 230, 118, 0.5) !important;
+  animation: pulseGlow 1.8s infinite !important;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 10px rgba(0, 230, 118, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(0, 230, 118, 0.85), 0 0 10px rgba(0, 176, 255, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(0, 230, 118, 0.4); }
+}
+
+.round-stepper-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.round-stepper-btn:hover {
+  background: var(--coral-primary);
+  border-color: var(--coral-primary);
+}
+

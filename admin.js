@@ -94,6 +94,10 @@ class AdminController {
     this.reloadDefaultsAdminBtn = document.getElementById("reloadDefaultsAdminBtn");
     this.testSoundBtn = document.getElementById("testSoundBtn");
 
+    this.adminPrevRoundBtn = document.getElementById("adminPrevRoundBtn");
+    this.adminNextRoundBtn = document.getElementById("adminNextRoundBtn");
+    this.startNextRoundBtn = document.getElementById("startNextRoundBtn");
+
     // Modals
     this.bulkModal = document.getElementById("bulkModal");
     this.openBulkModalBtn = document.getElementById("openBulkModalBtn");
@@ -105,8 +109,17 @@ class AdminController {
     this.saveBulkBtn = document.getElementById("saveBulkBtn");
 
     this.adminResetModal = document.getElementById("adminResetModal");
+    this.closeAdminResetBtn = document.getElementById("closeAdminResetBtn");
     this.cancelAdminResetBtn = document.getElementById("cancelAdminResetBtn");
     this.confirmAdminResetBtn = document.getElementById("confirmAdminResetBtn");
+    this.modalNextRoundNum = document.getElementById("modalNextRoundNum");
+    this.modalNextRoundNum2 = document.getElementById("modalNextRoundNum2");
+    this.modalStartNextRoundBtn = document.getElementById("modalStartNextRoundBtn");
+
+    this.adminGuideModal = document.getElementById("adminGuideModal");
+    this.adminGuideBtn = document.getElementById("adminGuideBtn");
+    this.closeAdminGuideBtn = document.getElementById("closeAdminGuideBtn");
+    this.closeAdminGuideFooterBtn = document.getElementById("closeAdminGuideFooterBtn");
 
     this.toast = document.getElementById("adminToast");
     this.toastIcon = document.getElementById("toastIcon");
@@ -281,6 +294,16 @@ class AdminController {
     this.updateDashboard();
   }
 
+  startNextRound() {
+    this.roundNumber = (this.roundNumber || 1) + 1;
+    this.historyList = [];
+    this.selectedFamily = null;
+    this.selectedPrayer = null;
+    this.publishState();
+    this.playTestChime();
+    this.showToast(`🎉 Advanced to Round ${this.roundNumber}! All families back on wheel.`, "🚀");
+  }
+
   updateDashboard() {
     const total = this.allFamilies.length;
     const prayedSet = new Set(
@@ -288,6 +311,7 @@ class AdminController {
     );
     const completed = this.historyList.length;
     const remaining = Math.max(0, total - completed);
+    const nextRound = (this.roundNumber || 1) + 1;
 
     // Stats
     if (this.statRound) {
@@ -296,6 +320,13 @@ class AdminController {
     this.statTotalFamilies.textContent = total;
     this.statPrayedFamilies.textContent = completed;
     this.statRemainingFamilies.textContent = remaining;
+
+    if (this.modalNextRoundNum) {
+      this.modalNextRoundNum.textContent = `Round ${nextRound}`;
+    }
+    if (this.modalNextRoundNum2) {
+      this.modalNextRoundNum2.textContent = `${nextRound}`;
+    }
 
     // Selected Winner View
     if (this.selectedFamily) {
@@ -312,10 +343,12 @@ class AdminController {
 
     // Spin Button state
     if (remaining === 0) {
-      this.remoteSpinBtn.disabled = true;
-      this.remoteSpinBtnText.textContent = "ALL FAMILIES PRAYED FOR";
+      this.remoteSpinBtn.disabled = false;
+      this.remoteSpinBtn.classList.add("btn-start-next-round");
+      this.remoteSpinBtnText.textContent = `START ROUND ${nextRound} NOW 🔄`;
     } else {
       this.remoteSpinBtn.disabled = false;
+      this.remoteSpinBtn.classList.remove("btn-start-next-round");
       this.remoteSpinBtnText.textContent = "TRIGGER REMOTE SPIN 🎯";
     }
 
@@ -422,15 +455,19 @@ class AdminController {
   }
 
   setupEventListeners() {
-    // 1. Remote Spin Trigger
+    // 1. Remote Spin Trigger & Next Round Action
     this.remoteSpinBtn.addEventListener("click", () => {
-      const remaining = this.allFamilies.filter(f => !new Set(this.historyList.map(h => typeof h === 'string' ? h : h.family)).has(f));
+      const prayedSet = new Set(this.historyList.map(h => typeof h === 'string' ? h : h.family));
+      const remaining = this.allFamilies.filter(f => !prayedSet.has(f));
+      
       if (remaining.length === 0) {
-        this.showToast("All families have already been prayed for!", "✨");
+        this.startNextRound();
         return;
       }
 
       this.showToast("🚀 Triggering Live Wheel Spin...", "🎯");
+      this.selectedFamily = null;
+      this.selectedPrayer = null;
       this.publishState({
         spinTrigger: {
           timestamp: Date.now(),
@@ -438,6 +475,29 @@ class AdminController {
         }
       });
     });
+
+    // 1b. Direct Next Round Button in Remote Stage Box
+    if (this.startNextRoundBtn) {
+      this.startNextRoundBtn.addEventListener("click", () => {
+        this.startNextRound();
+      });
+    }
+
+    // 1c. Header Round Stepper (+ / -)
+    if (this.adminPrevRoundBtn) {
+      this.adminPrevRoundBtn.addEventListener("click", () => {
+        if (this.roundNumber > 1) {
+          this.roundNumber -= 1;
+          this.publishState();
+          this.showToast(`Switched back to Round ${this.roundNumber}`, "ℹ️");
+        }
+      });
+    }
+    if (this.adminNextRoundBtn) {
+      this.adminNextRoundBtn.addEventListener("click", () => {
+        this.startNextRound();
+      });
+    }
 
     // 2. Clear Selection
     this.clearSelectionBtn.addEventListener("click", () => {
@@ -589,13 +649,28 @@ class AdminController {
       this.showToast(`Updated ${lines.length} families in database!`, "📋");
     });
 
-    // 8. Reset Modal
+    // 8. Reset & Next Round Modal
     this.openResetModalBtn.addEventListener("click", () => {
       this.adminResetModal.classList.remove("hidden");
     });
+    if (this.closeAdminResetBtn) {
+      this.closeAdminResetBtn.addEventListener("click", () => {
+        this.adminResetModal.classList.add("hidden");
+      });
+    }
     this.cancelAdminResetBtn.addEventListener("click", () => {
       this.adminResetModal.classList.add("hidden");
     });
+
+    // Next Round option from modal
+    if (this.modalStartNextRoundBtn) {
+      this.modalStartNextRoundBtn.addEventListener("click", () => {
+        this.adminResetModal.classList.add("hidden");
+        this.startNextRound();
+      });
+    }
+
+    // Reset to Round 1
     this.confirmAdminResetBtn.addEventListener("click", () => {
       this.roundNumber = 1;
       this.historyList = [];
@@ -604,6 +679,32 @@ class AdminController {
       this.adminResetModal.classList.add("hidden");
       this.publishState();
       this.showToast("🔄 Prayer session reset successfully to Round 1!", "✨");
+    });
+
+    // 8b. Coordinator Guide Modal
+    if (this.adminGuideBtn && this.adminGuideModal) {
+      this.adminGuideBtn.addEventListener("click", () => {
+        this.adminGuideModal.classList.remove("hidden");
+      });
+      if (this.closeAdminGuideBtn) {
+        this.closeAdminGuideBtn.addEventListener("click", () => {
+          this.adminGuideModal.classList.add("hidden");
+        });
+      }
+      if (this.closeAdminGuideFooterBtn) {
+        this.closeAdminGuideFooterBtn.addEventListener("click", () => {
+          this.adminGuideModal.classList.add("hidden");
+        });
+      }
+    }
+
+    // Close on overlay click
+    [this.bulkModal, this.adminResetModal, this.adminGuideModal].forEach(modal => {
+      if (modal) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.classList.add("hidden");
+        });
+      }
     });
 
     // 9. Export CSV & Copy Summary

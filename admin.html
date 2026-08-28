@@ -533,6 +533,9 @@
       </div>
 
       <div class="admin-nav-links">
+        <button id="adminGuideBtn" class="btn-link-wheel" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff; cursor:pointer;" title="Coordinator Instructions">
+          <span>ℹ️ Guide</span>
+        </button>
         <div class="status-pill" id="syncStatusPill" title="Connection Mode">
           <span class="status-dot online" id="statusDot"></span>
           <span id="statusText">Connecting Firebase...</span>
@@ -547,7 +550,11 @@
     <!-- Stats Banner -->
     <div class="stats-row" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
       <div class="stat-box">
-        <div class="stat-val coral" id="statRound">Round 1</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:0.4rem;">
+          <button class="round-stepper-btn" id="adminPrevRoundBtn" title="Previous Round">−</button>
+          <div class="stat-val coral" id="statRound">Round 1</div>
+          <button class="round-stepper-btn" id="adminNextRoundBtn" title="Next Round">+</button>
+        </div>
         <div class="stat-label">Current Session</div>
       </div>
       <div class="stat-box">
@@ -582,11 +589,14 @@
                 <span>🎯</span>
                 <span id="remoteSpinBtnText">TRIGGER REMOTE SPIN</span>
               </button>
+              <button id="startNextRoundBtn" class="btn-secondary-action" style="color:var(--sea-cyan);" title="Advance to Next Round">
+                <span>⏩ Next Round</span>
+              </button>
               <button id="clearSelectionBtn" class="btn-secondary-action" title="Clear current displayed family on wheel">
                 <span>⏹️ Clear Display</span>
               </button>
-              <button id="openResetModalBtn" class="btn-secondary-action" style="color:#ff8a80;" title="Reset session & start new round">
-                <span>🔄 Reset Round</span>
+              <button id="openResetModalBtn" class="btn-secondary-action" style="color:#ff8a80;" title="Reset session or start new round">
+                <span>🔄 Reset Options</span>
               </button>
             </div>
           </div>
@@ -717,23 +727,113 @@
     </div>
   </div>
 
-  <!-- Reset Confirmation Modal -->
+  <!-- Reset Options & Next Round Modal -->
   <div class="modal-overlay hidden" id="adminResetModal">
-    <div class="modal-card glass-panel text-center" style="max-width: 440px;">
+    <div class="modal-card glass-panel text-center" style="max-width: 480px;">
       <div class="modal-header">
-        <h3>🔄 Reset Entire Prayer Session?</h3>
+        <h3>🔄 Round & Session Controls</h3>
+        <button class="btn-close" id="closeAdminResetBtn">&times;</button>
       </div>
-      <div class="modal-body">
-        <p style="color:var(--text-sub); font-size:0.92rem; margin-bottom:0.5rem;">
-          This will clear all prayed-for history and restore every family back onto the wheel in real-time.
+      <div class="modal-body" style="text-align:left;">
+        <p style="color:var(--text-sub); font-size:0.88rem; margin-bottom:1rem;">
+          Choose how you would like to proceed with the retreat intercession session:
         </p>
-        <p style="color:var(--coral-primary); font-size:0.82rem; font-weight:700;">
-          All connected screens and wheels will refresh immediately.
+
+        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+          <!-- Option 1: Next Round -->
+          <div style="background:rgba(94,196,230,0.08); border:1px solid rgba(94,196,230,0.25); border-radius:12px; padding:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="font-size:0.92rem; color:#fff;">Start Next Round (<span id="modalNextRoundNum">Round 2</span>)</strong>
+              <p style="font-size:0.76rem; color:var(--text-muted); margin-top:0.15rem;">
+                Clears current history and places all families back on the wheel for Round <span id="modalNextRoundNum2">2</span>.
+              </p>
+            </div>
+            <button class="btn-spin" id="modalStartNextRoundBtn" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem;">
+              Start 🚀
+            </button>
+          </div>
+
+          <!-- Option 2: Full Reset -->
+          <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="font-size:0.92rem; color:#fca5a5;">Reset to Round 1</strong>
+              <p style="font-size:0.76rem; color:var(--text-muted); margin-top:0.15rem;">
+                Clears all history and sets current session back to Round 1.
+              </p>
+            </div>
+            <button class="btn-danger" id="confirmAdminResetBtn" style="width:auto; padding:0.5rem 1rem; font-size:0.85rem;">
+              Reset 🔄
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-center" style="margin-top:0.6rem;">
+        <button class="btn-pill-action" id="cancelAdminResetBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coordinator Guide Modal -->
+  <div class="modal-overlay hidden" id="adminGuideModal">
+    <div class="modal-card glass-panel" style="max-width: 520px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.3rem;">📖</span>
+          <h3 style="font-size:1.2rem;">Coordinator Quick Guide</h3>
+        </div>
+        <button class="btn-close" id="closeAdminGuideBtn">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 420px;">
+        <p style="font-size:0.86rem; color:var(--text-sub); margin-bottom:0.6rem;">
+          Welcome to the <strong>Familia'26 Coordinator Command Center</strong>. Here is how to control the live retreat prayer session:
         </p>
+
+        <div class="guide-steps-list">
+          <div class="guide-step-card">
+            <div class="guide-step-icon">🎯</div>
+            <div class="guide-step-content">
+              <div class="guide-step-title">1. Trigger Remote Spin</div>
+              <div class="guide-step-desc">
+                Click <strong>"TRIGGER REMOTE SPIN"</strong> to immediately trigger the wheel on all connected projector screens and laptops in real-time.
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-icon">🔄</div>
+            <div class="guide-step-content">
+              <div class="guide-step-title">2. Managing Rounds</div>
+              <div class="guide-step-desc">
+                When all families are prayed for, the main button turns green to <strong>"START ROUND X NOW"</strong>. You can also click <strong>"⏩ Next Round"</strong> or use the <strong>+ / −</strong> buttons anytime.
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-icon">👥</div>
+            <div class="guide-step-content">
+              <div class="guide-step-title">3. Add, Edit & Filter Families</div>
+              <div class="guide-step-desc">
+                Use <strong>Bulk Edit</strong> to paste lists from Google Sheets or add families one-by-one. Mark prayed or restore families back to the wheel as needed.
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-step-card">
+            <div class="guide-step-icon">📥</div>
+            <div class="guide-step-content">
+              <div class="guide-step-title">4. Export & Logs</div>
+              <div class="guide-step-desc">
+                Export prayer log records to CSV or copy text summary to share with ministry leaders.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer justify-center">
-        <button class="btn-pill-action" id="cancelAdminResetBtn">Cancel</button>
-        <button class="btn-danger" id="confirmAdminResetBtn">Yes, Reset Session</button>
+        <button class="btn-spin" id="closeAdminGuideFooterBtn" style="width:auto; padding:0.65rem 1.8rem;">
+          Got it! 🚀
+        </button>
       </div>
     </div>
   </div>

@@ -37,6 +37,10 @@
       </div>
 
       <div class="nav-actions">
+        <button id="helpBtn" class="nav-btn" title="How to Spin & Instructions">
+          <span class="nav-btn-icon">ℹ️</span>
+          <span style="font-size:0.75rem; font-weight:700;">Guide</span>
+        </button>
         <button id="historyToggleBtn" class="nav-btn" title="Prayed Families History">
           <span class="nav-btn-icon">📋</span>
           <span class="nav-badge" id="historyCount">0</span>
@@ -234,6 +238,85 @@
         <div class="modal-footer justify-center">
           <button class="btn-pill-action" id="cancelResetBtn">Cancel</button>
           <button class="btn-danger" id="confirmResetBtn">Yes, Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions / Guide Modal -->
+    <div class="modal-overlay hidden" id="instructionsModal">
+      <div class="modal-card glass-panel" style="max-width: 520px;">
+        <div class="modal-header">
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <span style="font-size:1.3rem;">✨</span>
+            <h3 style="font-size:1.2rem;">How to Use Prayer Wheel</h3>
+          </div>
+          <button class="btn-close" id="closeInstructionsBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 420px;">
+          <p style="font-size:0.86rem; color:var(--text-sub); margin-bottom:0.6rem;">
+            Welcome to the <strong>Familia'26 Intercession Wheel</strong>! Follow these simple steps to pray for every retreat family:
+          </p>
+
+          <div class="guide-steps-list">
+            <!-- Step 1 -->
+            <div class="guide-step-card">
+              <div class="guide-step-icon">🎯</div>
+              <div class="guide-step-content">
+                <div class="guide-step-title">1. Spin the Wheel</div>
+                <div class="guide-step-desc">
+                  Tap the big <strong>"SPIN FOR PRAYER"</strong> button or hit the <strong>[SPACEBAR]</strong> on your keyboard to start the wheel spinning.
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="guide-step-card">
+              <div class="guide-step-icon">🕊️</div>
+              <div class="guide-step-content">
+                <div class="guide-step-title">2. Receive Family & Intention</div>
+                <div class="guide-step-desc">
+                  The wheel lands on a participant family and reveals a specific prayer intention (<em>1 Hail Mary</em>, <em>1 Our Father</em>, or <em>1 Glory Be</em>) along with an inspiring Scripture verse.
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="guide-step-card">
+              <div class="guide-step-icon">🙏</div>
+              <div class="guide-step-content">
+                <div class="guide-step-title">3. Intercede as One Body</div>
+                <div class="guide-step-desc">
+                  The leader guides everyone in lifting the selected family up in prayer. Prayed families are automatically marked and logged in history.
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="guide-step-card">
+              <div class="guide-step-icon">🔄</div>
+              <div class="guide-step-content">
+                <div class="guide-step-title">4. Automatic Next Round</div>
+                <div class="guide-step-desc">
+                  When all 31 families are completed, a celebration confetti shower appears and the session advances to <strong>Round 2</strong> automatically!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="guide-tip-box">
+            <span>💡</span>
+            <span><strong>Tip:</strong> Coordinators can remotely trigger spins and manage rounds from the <a href="admin.html" target="_blank" style="color:var(--coral-primary); text-decoration:underline;">Admin Portal</a>.</span>
+          </div>
+
+          <div style="margin-top:0.85rem; display:flex; align-items:center; gap:0.5rem; font-size:0.82rem; color:var(--text-muted);">
+            <input type="checkbox" id="dontShowGuideCheckbox" style="cursor:pointer; accent-color:var(--coral-primary);">
+            <label for="dontShowGuideCheckbox" style="cursor:pointer;">Don't show this guide automatically on startup</label>
+          </div>
+        </div>
+        <div class="modal-footer justify-center" style="margin-top:0.4rem;">
+          <button class="btn-spin" id="closeInstructionsFooterBtn" style="width:auto; padding:0.65rem 1.8rem; font-size:0.95rem;">
+            Got it, Let's Pray! 🕊️
+          </button>
         </div>
       </div>
     </div>
