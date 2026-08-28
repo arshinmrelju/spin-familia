@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Familia Retreat • Prayer Wheel</title>
+  <meta name="description" content="A modern, prayerful spinning wheel for Familia Retreat to lift each family up in prayer.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Confetti Overlay -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="app-container">
+    <!-- Sleek Top App Bar -->
+    <header class="app-navbar">
+      <div class="brand-lockup">
+        <div class="jy-logo-badge">
+          <img src="assets/jy-logo black.png" alt="Jesus Youth Logo">
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">Familia'26</h1>
+          <span class="brand-sub">Intercession Wheel</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="historyToggleBtn" class="nav-btn" title="Prayed Families History">
+          <span class="nav-btn-icon">📋</span>
+          <span class="nav-badge" id="historyCount">0</span>
+        </button>
+        <button id="menuBtn" class="nav-btn" title="Settings & Families">
+          <span class="nav-btn-icon">⚙️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Wheel Section -->
+    <main class="wheel-section">
+      <div class="wheel-stage">
+        <!-- Dynamic pointer that tilts on ticks -->
+        <div class="pointer-wrapper" id="pointerWrapper">
+          <div class="pointer-arrow">
+            <svg viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 44L2 12C2 5.37258 8.71573 0 17 0C25.2843 0 32 5.37258 32 12L17 44Z" fill="url(#coralGrad)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))"/>
+              <circle cx="17" cy="14" r="6" fill="#FFFFFF" opacity="0.95" />
+              <defs>
+                <linearGradient id="coralGrad" x1="0" y1="0" x2="34" y2="44" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#FF8A65"/>
+                  <stop offset="0.6" stop-color="#FF6838"/>
+                  <stop offset="1" stop-color="#E64A19"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <div class="wheel-container">
+          <canvas id="wheelCanvas" width="800" height="800"></canvas>
+          <div class="wheel-center-hub" id="centerHub">
+            <div class="hub-inner">
+              <img src="assets/jy-logo black.png" alt="Jesus Youth Logo" class="hub-logo">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prominent Volunteer Spin Button -->
+      <div class="actions-wrapper">
+        <button id="spinBtn" class="btn-spin">
+          <span class="btn-text">SPIN FOR PRAYER</span>
+          <span class="btn-shine"></span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Selected Family Reveal Section -->
+    <section class="result-section glass-panel" id="resultCard">
+      <div class="result-placeholder" id="resultPlaceholder">
+        <p class="placeholder-text">Tap <strong>SPIN FOR PRAYER</strong> to select a family to intercede for</p>
+      </div>
+
+      <div class="result-content hidden" id="resultContent">
+        <div class="grace-badge">PRAYER INTENTION</div>
+        <div class="selected-family-badge">
+          <h2 class="selected-family-name" id="selectedFamilyName">Shaji & Rini Shaji</h2>
+        </div>
+        
+        <div class="prayer-callout">
+          <div class="prayer-type-banner">
+            <span class="prayer-type-label">REQUESTED PRAYER</span>
+            <div class="prayer-type-name" id="prayerTypeName">📿 1 Decade of the Rosary</div>
+          </div>
+          <p class="prayer-message" id="prayerMessage">🙏 Please offer 1 Decade of the Rosary for this family.</p>
+          <p class="scripture-quote" id="scriptureQuote">
+            “The Lord bless you and keep you; the Lord make his face shine upon you and be gracious to you.”
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings / Menu Modal -->
+    <div class="modal-overlay hidden" id="menuModal">
+      <div class="modal-card glass-panel" style="max-width: 480px;">
+        <div class="modal-header">
+          <h3>⚙️ Intercession Options</h3>
+          <button class="btn-close" id="closeMenuBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="menu-list">
+            <!-- Sound toggle option -->
+            <div class="menu-item" id="soundToggleRow">
+              <div class="menu-item-info">
+                <span class="menu-item-icon">🔔</span>
+                <div>
+                  <strong>Sound Effects</strong>
+                  <p class="menu-item-desc">Tick sounds and celebration chimes</p>
+                </div>
+              </div>
+              <button id="soundToggleBtn" class="btn-pill-action">Sound ON</button>
+            </div>
+
+            <!-- Edit families option -->
+            <div class="menu-item">
+              <div class="menu-item-info">
+                <span class="menu-item-icon">👥</span>
+                <div>
+                  <strong>Retreat Families (<span id="totalFamilyCount">31</span>)</strong>
+                  <p class="menu-item-desc">Add, edit or paste participants</p>
+                </div>
+              </div>
+              <button id="manageFamiliesBtn" class="btn-pill-action">Edit List</button>
+            </div>
+
+            <!-- Reset option -->
+            <div class="menu-item menu-danger">
+              <div class="menu-item-info">
+                <span class="menu-item-icon">🔄</span>
+                <div>
+                  <strong>Reset Prayer Session</strong>
+                  <p class="menu-item-desc">Clear history and restart wheel</p>
+                </div>
+              </div>
+              <button id="resetBtn" class="btn-pill-action btn-danger-pill">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-pill-action" id="closeMenuFooterBtn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Families Modal -->
+    <div class="modal-overlay hidden" id="manageModal">
+      <div class="modal-card glass-panel" style="max-width: 500px;">
+        <div class="modal-header">
+          <h3>👥 Manage Retreat Families</h3>
+          <button class="btn-close" id="closeManageBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+            One family per line. You can paste directly from Google Sheets:
+          </p>
+          <textarea id="familyListTextarea" rows="10" placeholder="Family 1&#10;Family 2" style="width:100%; padding:0.85rem; border-radius:10px; border:1px solid var(--card-border); background:rgba(7,22,38,0.85); color:#fff; font-family:var(--font-family); font-size:0.9rem; line-height:1.6; resize:vertical;"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem;">
+            <span id="textareaCount" style="font-size:0.8rem; color:var(--coral-primary);">31 families detected</span>
+            <button id="loadDefaultsBtn" class="btn-pill-action" style="font-size:0.75rem; padding:0.3rem 0.7rem;">Reload Sheet List</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-pill-action" id="closeManageFooterBtn">Cancel</button>
+          <button class="btn-spin" id="saveFamiliesBtn" style="width:auto; padding:0.6rem 1.3rem; font-size:0.9rem;">Save & Update</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Drawer Modal -->
+    <div class="modal-overlay hidden" id="historyModal">
+      <div class="modal-card glass-panel">
+        <div class="modal-header">
+          <h3>🕊️ Prayed-for Families</h3>
+          <button class="btn-close" id="closeHistoryBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <ul class="history-list" id="historyList">
+            <li class="empty-history">No families selected yet for this session.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-pill-action" id="closeHistoryFooterBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div class="modal-overlay hidden" id="resetModal">
+      <div class="modal-card glass-panel text-center">
+        <div class="modal-header">
+          <h3>Reset Prayer Session?</h3>
+        </div>
+        <div class="modal-body">
+          <p style="color:var(--text-sub); font-size:0.92rem;">This will clear the history and restore all families back onto the wheel.</p>
+        </div>
+        <div class="modal-footer justify-center">
+          <button class="btn-pill-action" id="cancelResetBtn">Cancel</button>
+          <button class="btn-danger" id="confirmResetBtn">Yes, Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Families Completed Modal -->
+    <div class="modal-overlay hidden" id="completedModal">
+      <div class="modal-card glass-panel text-center">
+        <div class="celebration-icon">🕊️✨</div>
+        <h2 style="font-size:1.4rem; margin-top:0.5rem;">All Families Have Been Prayed For!</h2>
+        <p class="completed-text">Glory to God! Every family in the retreat has been held up in prayer.</p>
+        <div class="modal-footer justify-center" style="margin-top:1rem;">
+          <button class="btn-spin" id="completedResetBtn" style="width:auto; padding:0.7rem 1.6rem;">Start New Round 🔄</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
