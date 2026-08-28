@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "retreat_state": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

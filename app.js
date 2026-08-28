@@ -292,14 +292,24 @@ class PrayerWheelApp {
     this.cancelResetBtn = document.getElementById("cancelResetBtn");
     this.confirmResetBtn = document.getElementById("confirmResetBtn");
 
-    // Completed Modal
+    // Completed Modal & Round Tracking
     this.completedModal = document.getElementById("completedModal");
     this.completedResetBtn = document.getElementById("completedResetBtn");
+    this.completedTitle = document.getElementById("completedTitle");
+    this.nextRoundNum = document.getElementById("nextRoundNum");
+    this.btnNextRoundNum = document.getElementById("btnNextRoundNum");
+    this.autostartCountdown = document.getElementById("autostartCountdown");
+    this.roundBadgeText = document.getElementById("roundBadgeText");
+    this.roundNumber = 1;
+    this.autoStartCountdownTimer = null;
 
     // Helpers
     this.sounds = new SoundEffects();
     this.confetti = new ConfettiShower(document.getElementById("confettiCanvas"));
     this.lastTickIndex = -1;
+    this.lastProcessedSpinTrigger = null;
+    this.broadcastChannel = null;
+    this.dbRef = null;
 
     this.init();
   }
@@ -307,12 +317,126 @@ class PrayerWheelApp {
   init() {
     this.setupEventListeners();
     this.loadData();
+    this.initSync();
     this.recalculateActiveFamilies();
     this.drawWheel();
     this.updateUI();
   }
 
+  initSync() {
+    // 1. BroadcastChannel for local same-browser cross-tab sync
+    if (typeof BroadcastChannel !== "undefined") {
+      try {
+        this.broadcastChannel = new BroadcastChannel("familia_retreat_channel");
+        this.broadcastChannel.onmessage = (event) => {
+          if (event && event.data) {
+            this.handleIncomingState(event.data);
+          }
+        };
+      } catch (e) {}
+    }
+
+    // 2. Firebase Realtime Database
+    if (typeof firebase !== "undefined" && window.firebaseConfig) {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(window.firebaseConfig);
+        }
+        const db = firebase.database();
+        this.dbRef = db.ref("retreat_state");
+
+        this.dbRef.on("value", (snap) => {
+          const val = snap.val();
+          if (val) {
+            this.handleIncomingState(val);
+          }
+        });
+      } catch (e) {
+        console.warn("Firebase sync error in app.js:", e);
+      }
+    }
+  }
+
+  handleIncomingState(state) {
+    if (!state) return;
+
+    // Check remote spin trigger from Admin Portal
+    if (state.spinTrigger && state.spinTrigger.timestamp) {
+      const triggerKey = state.spinTrigger.id || state.spinTrigger.timestamp;
+      if (this.lastProcessedSpinTrigger !== triggerKey) {
+        this.lastProcessedSpinTrigger = triggerKey;
+        // If trigger is recent (within 10 seconds) and wheel is ready
+        if (Date.now() - state.spinTrigger.timestamp < 10000 && !this.isSpinning) {
+          this.spin();
+          return;
+        }
+      }
+    }
+
+    let needsRedraw = false;
+
+    if (state.roundNumber !== undefined && state.roundNumber !== this.roundNumber) {
+      this.roundNumber = state.roundNumber;
+      localStorage.setItem("familia_retreat_round_v4", this.roundNumber.toString());
+      needsRedraw = true;
+    }
+
+    if (Array.isArray(state.allFamilies) && JSON.stringify(state.allFamilies) !== JSON.stringify(this.allFamilies)) {
+      this.allFamilies = state.allFamilies;
+      needsRedraw = true;
+    }
+
+    if (Array.isArray(state.historyList) && JSON.stringify(state.historyList) !== JSON.stringify(this.historyList)) {
+      this.historyList = state.historyList;
+      needsRedraw = true;
+    }
+
+    if (state.selectedFamily !== undefined && state.selectedFamily !== this.selectedFamily) {
+      this.selectedFamily = state.selectedFamily;
+      if (!this.isSpinning) {
+        if (this.selectedFamily) {
+          this.displaySelectedFamily(this.selectedFamily, state.selectedPrayer, false);
+        } else {
+          this.clearResultCard();
+        }
+      }
+    }
+
+    if (needsRedraw) {
+      localStorage.setItem("familia_retreat_families_v4", JSON.stringify(this.allFamilies));
+      localStorage.setItem("familia_retreat_history_v4", JSON.stringify(this.historyList));
+      localStorage.setItem("familia_retreat_round_v4", this.roundNumber.toString());
+      this.recalculateActiveFamilies();
+      this.drawWheel();
+      this.updateUI();
+    }
+  }
+
+  publishState(extraPayload = {}) {
+    const statePayload = {
+      roundNumber: this.roundNumber,
+      allFamilies: this.allFamilies,
+      historyList: this.historyList,
+      selectedFamily: this.selectedFamily,
+      selectedPrayer: this.selectedPrayer,
+      lastUpdated: Date.now(),
+      ...extraPayload
+    };
+
+    if (this.broadcastChannel) {
+      try {
+        this.broadcastChannel.postMessage(statePayload);
+      } catch (e) {}
+    }
+
+    if (this.dbRef) {
+      this.dbRef.update(statePayload).catch(() => {});
+    }
+  }
+
   loadData() {
+    this.roundNumber = parseInt(localStorage.getItem("familia_retreat_round_v4") || "1", 10) || 1;
+
     const savedFamilies = localStorage.getItem("familia_retreat_families_v4");
     if (savedFamilies) {
       try {
@@ -354,11 +478,13 @@ class PrayerWheelApp {
 
   saveFamiliesToStorage() {
     localStorage.setItem("familia_retreat_families_v4", JSON.stringify(this.allFamilies));
+    this.publishState();
   }
 
   saveHistoryToStorage() {
     localStorage.setItem("familia_retreat_history_v4", JSON.stringify(this.historyList));
     localStorage.setItem("familia_retreat_selected_v4", JSON.stringify(this.selectedFamily));
+    this.publishState();
   }
 
   recalculateActiveFamilies() {
@@ -388,6 +514,10 @@ class PrayerWheelApp {
 
     this.historyCount.textContent = completed;
     this.totalFamilyCount.textContent = total;
+
+    if (this.roundBadgeText) {
+      this.roundBadgeText.textContent = `Round ${this.roundNumber || 1}`;
+    }
 
     this.renderHistoryList();
   }
@@ -504,8 +634,7 @@ class PrayerWheelApp {
 
     // Completed Modal Reset
     this.completedResetBtn.addEventListener("click", () => {
-      this.completedModal.classList.add("hidden");
-      this.resetSession();
+      this.startNextRound();
     });
 
     // Close on overlay click
@@ -767,8 +896,15 @@ class PrayerWheelApp {
   }
 
   resetSession() {
+    if (this.autoStartCountdownTimer) {
+      clearInterval(this.autoStartCountdownTimer);
+      this.autoStartCountdownTimer = null;
+    }
+    this.roundNumber = 1;
     this.historyList = [];
     this.selectedFamily = null;
+    this.selectedPrayer = null;
+    localStorage.setItem("familia_retreat_round_v4", "1");
     this.saveHistoryToStorage();
     this.clearResultCard();
     this.recalculateActiveFamilies();
@@ -777,8 +913,71 @@ class PrayerWheelApp {
   }
 
   showCompletedModal() {
+    if (this.autoStartCountdownTimer) {
+      clearInterval(this.autoStartCountdownTimer);
+      this.autoStartCountdownTimer = null;
+    }
+
+    const currentRound = this.roundNumber || 1;
+    const nextRound = currentRound + 1;
+
+    if (this.completedTitle) {
+      this.completedTitle.textContent = `Round ${currentRound} Completed! 🎉`;
+    }
+    if (this.nextRoundNum) {
+      this.nextRoundNum.textContent = nextRound;
+    }
+    if (this.btnNextRoundNum) {
+      this.btnNextRoundNum.textContent = nextRound;
+    }
+
+    let timeLeft = 5;
+    if (this.autostartCountdown) {
+      this.autostartCountdown.textContent = timeLeft;
+    }
+
     this.completedModal.classList.remove("hidden");
     this.confetti.burst();
+    this.sounds.playCelebration();
+
+    // Auto-start countdown (5 seconds)
+    this.autoStartCountdownTimer = setInterval(() => {
+      timeLeft -= 1;
+      if (this.autostartCountdown) {
+        this.autostartCountdown.textContent = Math.max(0, timeLeft);
+      }
+      if (timeLeft <= 0) {
+        clearInterval(this.autoStartCountdownTimer);
+        this.autoStartCountdownTimer = null;
+        this.startNextRound();
+      }
+    }, 1000);
+  }
+
+  startNextRound() {
+    if (this.autoStartCountdownTimer) {
+      clearInterval(this.autoStartCountdownTimer);
+      this.autoStartCountdownTimer = null;
+    }
+
+    this.roundNumber = (this.roundNumber || 1) + 1;
+    this.historyList = [];
+    this.selectedFamily = null;
+    this.selectedPrayer = null;
+    localStorage.setItem("familia_retreat_round_v4", this.roundNumber.toString());
+
+    this.saveHistoryToStorage();
+    this.clearResultCard();
+    this.recalculateActiveFamilies();
+    this.drawWheel();
+    this.updateUI();
+
+    if (this.completedModal) {
+      this.completedModal.classList.add("hidden");
+    }
+
+    this.confetti.burst();
+    this.sounds.playCelebration();
   }
 
   escapeHtml(str) {
