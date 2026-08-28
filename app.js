@@ -332,12 +332,7 @@ class PrayerWheelApp {
   }
 
   checkInitialGuide() {
-    const isGuideDisabled = localStorage.getItem("familia_retreat_guide_disabled") === "true";
-    if (!isGuideDisabled && this.instructionsModal) {
-      setTimeout(() => {
-        this.instructionsModal.classList.remove("hidden");
-      }, 400);
-    }
+    // Guide disabled
   }
 
   initSync() {
